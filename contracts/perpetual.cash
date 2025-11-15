@@ -2,7 +2,27 @@ pragma cashscript ~0.12.0;
 
 contract Perpetual(pubkey user) 
 {
-    function release(sig userSig) {
-        require(checkSig(userSig, user));
+    // input_0 -> perpetual contract UTXO
+    // input_1 -> transaction funding UTXO // do I need to define anything here?
+    // output_0 -> user payout UTXO
+    // output_1 -> service payout UTXO
+    // output_2 (?) -> return remaining perpetual contract UTXO
+    function release() {
+        int initValue = tx.inputs[0].value;
+        int payout = (initValue / 100) * 2;
+        int serviceFee = (initValue / 1000);
+
+        bytes25 userBytecode = new LockingBytecodeP2PKH(hash160(user));
+        require(tx.outputs[0].lockingBytecode == userBytecode);
+        require(tx.outputs[0].value == payout);
+
+        // TODO: Handle EOL low amounts available
+        // TODO: Handle minimum values
+        // servicer
+        require(tx.outputs[1].value == serviceFee);
+
+        // TODO: Handle EOL
+        require(tx.outputs[2].value == initValue - payout - serviceFee);
+        require(tx.outputs[2].lockingBytecode == tx.inputs[0].lockingBytecode);
     }
 }

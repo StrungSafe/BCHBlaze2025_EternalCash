@@ -8,7 +8,7 @@
   "license": "MIT",
   "scripts": {
     "build": "node ./contracts/build.js",
-    "test": "node ./test.js"
+    "test": "node ./contracts/build.js && node ./test.js"
   },
   "dependencies": {
     "cashc": "^0.12.0",
