@@ -1,0 +1,8 @@
+{
+  "name": "perpetualThis",
+  "version": "0.1.0",
+  "description": "A perpetual contract on BCH",
+  "main": "index.js",
+  "author": "StrungSafe",
+  "license": "MIT"
+}
