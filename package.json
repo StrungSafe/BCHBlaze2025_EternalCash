@@ -7,11 +7,11 @@
   "author": "StrungSafe",
   "license": "MIT",
   "scripts": {
-    "build": "node ./contracts/build.js",
-    "test": "node ./contracts/build.js && node ./test.js"
+    "build": "cashc ./contracts/perpetual.cash --output ./art/perpetual.json",
+    "test": "node ./test.js"
   },
   "dependencies": {
-    "cashc": "^0.12.0",
+    "cashc": "0.13.0-next.1",
     "cashscript": "0.13.0-next.1"
   }
 }

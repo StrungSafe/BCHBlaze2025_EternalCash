@@ -14,12 +14,19 @@ const secp256k1 = await instantiateSecp256k1();
 const ripemd160 = await instantiateRipemd160();
 const sha256 = await instantiateSha256();
 
-const ensureSuccess = async (test, build) => {
+const ensureSuccess = async (name, build) => {
     const transaction = build();
-    await transaction.send();
+    try {
+        await transaction.send();
+    } catch (error) {
+        console.log('FAILED: ' + name);
+        throw new Error("Test Failure: " + name);
+    }
+    console.log('PASSED: ' + name);
 };
 
-const ensureFailure = async (test, build) => {
+const ensureFailure = async (name, build) => {
+    
     const transaction = build();
     let fail = false;
     try {
@@ -28,8 +35,10 @@ const ensureFailure = async (test, build) => {
         fail = true;
     }
     if(!fail) {
-        throw new Error("Test Failure");
+        console.log('FAILED: ' + name);
+        throw new Error("Test Failure: " + name);
     }
+    console.log('PASSED: ' + name);
 }
 
 const network = 'mocknet';
@@ -49,21 +58,35 @@ const attacker = generateWallet();
 const service = generateWallet();
 
 const provider = new MockNetworkProvider({ updateUtxoSet: false });
-const contract = new Contract(perpetual, [user.pubKeyHex], { provider, addressType: 'p2sh20' });
+const contract = new Contract(perpetual, [user.pubKeyHex], { provider });
 const mockUtxo = randomUtxo({ 
     satoshis: 10000000n,
 });
 
 provider.addUtxo(contract.address, mockUtxo);
 
-ensureSuccess("Release_WhenInvoked_UserGetsTwoPercentPayout", () => new TransactionBuilder({ provider })
+await ensureSuccess("Release_WhenInvoked_UserGetsPayout", () => new TransactionBuilder({ provider })
     .addInput(mockUtxo, contract.unlock.release())
     .addOutput({ to: user.address, amount: 200000n })
     .addOutput({ to: service.address, amount: 10000n })
     .addOutput({ to: contract.address, amount: 9790000n })
 );
 
-ensureFailure("Release_WhenInvoked_AttackerUnableToGetPayout", () => new TransactionBuilder({ provider })
+await ensureFailure("Release_WhenInvoked_WithLessThanPayout", () => new TransactionBuilder({ provider })
+    .addInput(mockUtxo, contract.unlock.release())
+    .addOutput({ to: user.address, amount: 199999n })
+    .addOutput({ to: service.address, amount: 10000n })
+    .addOutput({ to: contract.address, amount: 9790000n })
+);
+
+await ensureFailure("Release_WhenInvoked_WithMoreThanPayout", () => new TransactionBuilder({ provider })
+    .addInput(mockUtxo, contract.unlock.release())
+    .addOutput({ to: user.address, amount: 200001n })
+    .addOutput({ to: service.address, amount: 10000n })
+    .addOutput({ to: contract.address, amount: 9790000n })
+);
+
+await ensureFailure("Release_WhenInvoked_WithAttackerPayoutAddress", () => new TransactionBuilder({ provider })
     .addInput(mockUtxo, contract.unlock.release())
     .addOutput({ to: attacker.address, amount: 200000n })
     .addOutput({ to: service.address, amount: 10000n })

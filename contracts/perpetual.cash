@@ -1,4 +1,4 @@
-pragma cashscript ~0.12.0;
+pragma cashscript ~0.13.0;
 
 contract Perpetual(pubkey user) 
 {
@@ -8,12 +8,13 @@ contract Perpetual(pubkey user)
     // output_1 -> service payout UTXO
     // output_2 (?) -> return remaining perpetual contract UTXO
     function release() {
+        bytes25 userBytecode = new LockingBytecodeP2PKH(hash160(user));
+        require(tx.outputs[0].lockingBytecode == userBytecode);
+        
         int initValue = tx.inputs[0].value;
         int payout = (initValue / 100) * 2;
         int serviceFee = (initValue / 1000);
 
-        bytes25 userBytecode = new LockingBytecodeP2PKH(hash160(user));
-        require(tx.outputs[0].lockingBytecode == userBytecode);
         require(tx.outputs[0].value == payout);
 
         // TODO: Handle EOL low amounts available

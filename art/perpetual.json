@@ -1,1 +1,49 @@
-{"contractName":"Perpetual","constructorInputs":[{"name":"user","type":"pubkey"}],"abi":[{"name":"release","inputs":[]}],"bytecode":"OP_0 OP_UTXOVALUE OP_DUP 64 OP_DIV OP_2 OP_MUL OP_OVER e803 OP_DIV 76a914 OP_4 OP_ROLL OP_HASH160 OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_EQUALVERIFY OP_0 OP_OUTPUTVALUE OP_2 OP_PICK OP_NUMEQUALVERIFY OP_1 OP_OUTPUTVALUE OP_OVER OP_NUMEQUALVERIFY OP_2 OP_OUTPUTVALUE OP_2SWAP OP_SUB OP_ROT OP_SUB OP_NUMEQUALVERIFY OP_2 OP_OUTPUTBYTECODE OP_0 OP_UTXOBYTECODE OP_EQUAL","source":"pragma cashscript ~0.12.0;\r\n\r\ncontract Perpetual(pubkey user) \r\n{\r\n    // input_0 -> perpetual contract UTXO\r\n    // input_1 -> transaction funding UTXO // do I need to define anything here?\r\n    // output_0 -> user payout UTXO\r\n    // output_1 -> service payout UTXO\r\n    // output_2 (?) -> return remaining perpetual contract UTXO\r\n    function release() {\r\n        int initValue = tx.inputs[0].value;\r\n        int payout = (initValue / 100) * 2;\r\n        int serviceFee = (initValue / 1000);\r\n\r\n        bytes25 userBytecode = new LockingBytecodeP2PKH(hash160(user));\r\n        require(tx.outputs[0].lockingBytecode == userBytecode);\r\n        require(tx.outputs[0].value == payout);\r\n\r\n        // TODO: Handle EOL low amounts available\r\n        // TODO: Handle minimum values\r\n        // servicer\r\n        require(tx.outputs[1].value == serviceFee);\r\n\r\n        // TODO: Handle EOL\r\n        require(tx.outputs[2].value == initValue - payout - serviceFee);\r\n        require(tx.outputs[2].lockingBytecode == tx.inputs[0].lockingBytecode);\r\n    }\r\n}\r\n","debug":{"bytecode":"00c67601649652957802e803960376a914547aa97e0288ac7e00cd8800cc52799d51cc789d52cc72947b949d52cd00c787","sourceMap":"11:34:11:35;:24::42:1;12:22:12:31:0;:34::37;:22:::1;:41::42:0;:21:::1;13:26:13:35:0;:38::42;:26:::1;15:31:15:70:0;:64::68;;:56::69:1;:31::70;;;16:27:16:28:0;:16::45:1;:8::63;17:27:17:28:0;:16::35:1;:39::45:0;;:8::47:1;22:27:22:28:0;:16::35:1;:39::49:0;:8::51:1;25:27:25:28:0;:16::35:1;:39::57:0;::::1;:60::70:0;:39:::1;:8::72;26:27:26:28:0;:16::45:1;:59::60:0;:49::77:1;:8::79","logs":[],"requires":[{"ip":20,"line":16},{"ip":25,"line":17},{"ip":29,"line":22},{"ip":36,"line":25},{"ip":42,"line":26}]},"compiler":{"name":"cashc","version":"0.12.0"},"updatedAt":"2025-11-15T18:46:07.185Z"}
+{
+  "contractName": "Perpetual",
+  "constructorInputs": [
+    {
+      "name": "user",
+      "type": "pubkey"
+    }
+  ],
+  "abi": [
+    {
+      "name": "release",
+      "inputs": []
+    }
+  ],
+  "bytecode": "76a914 OP_SWAP OP_HASH160 OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_EQUALVERIFY OP_0 OP_UTXOVALUE OP_DUP 64 OP_DIV OP_2 OP_MUL OP_OVER e803 OP_DIV OP_0 OP_OUTPUTVALUE OP_2 OP_PICK OP_NUMEQUALVERIFY OP_1 OP_OUTPUTVALUE OP_OVER OP_NUMEQUALVERIFY OP_2 OP_OUTPUTVALUE OP_2SWAP OP_SUB OP_ROT OP_SUB OP_NUMEQUALVERIFY OP_2 OP_OUTPUTBYTECODE OP_0 OP_UTXOBYTECODE OP_EQUAL",
+  "source": "pragma cashscript ~0.13.0;\r\n\r\ncontract Perpetual(pubkey user) \r\n{\r\n    // input_0 -> perpetual contract UTXO\r\n    // input_1 -> transaction funding UTXO // do I need to define anything here?\r\n    // output_0 -> user payout UTXO\r\n    // output_1 -> service payout UTXO\r\n    // output_2 (?) -> return remaining perpetual contract UTXO\r\n    function release() {\r\n        bytes25 userBytecode = new LockingBytecodeP2PKH(hash160(user));\r\n        require(tx.outputs[0].lockingBytecode == userBytecode);\r\n        \r\n        int initValue = tx.inputs[0].value;\r\n        int payout = (initValue / 100) * 2;\r\n        int serviceFee = (initValue / 1000);\r\n\r\n        require(tx.outputs[0].value == payout);\r\n\r\n        // TODO: Handle EOL low amounts available\r\n        // TODO: Handle minimum values\r\n        // servicer\r\n        require(tx.outputs[1].value == serviceFee);\r\n\r\n        // TODO: Handle EOL\r\n        require(tx.outputs[2].value == initValue - payout - serviceFee);\r\n        require(tx.outputs[2].lockingBytecode == tx.inputs[0].lockingBytecode);\r\n    }\r\n}\r\n",
+  "debug": {
+    "bytecode": "0376a9147ca97e0288ac7e00cd8800c67601649652957802e8039600cc52799d51cc789d52cc72947b949d52cd00c787",
+    "sourceMap": "11:31:11:70;:64::68;:56::69:1;:31::70;;;12:27:12:28:0;:16::45:1;:8::63;14:34:14:35:0;:24::42:1;15:22:15:31:0;:34::37;:22:::1;:41::42:0;:21:::1;16:26:16:35:0;:38::42;:26:::1;18:27:18:28:0;:16::35:1;:39::45:0;;:8::47:1;23:27:23:28:0;:16::35:1;:39::49:0;:8::51:1;26:27:26:28:0;:16::35:1;:39::57:0;::::1;:60::70:0;:39:::1;:8::72;27:27:27:28:0;:16::45:1;:59::60:0;:49::77:1;:8::79",
+    "logs": [],
+    "requires": [
+      {
+        "ip": 9,
+        "line": 12
+      },
+      {
+        "ip": 24,
+        "line": 18
+      },
+      {
+        "ip": 28,
+        "line": 23
+      },
+      {
+        "ip": 35,
+        "line": 26
+      },
+      {
+        "ip": 41,
+        "line": 27
+      }
+    ]
+  },
+  "compiler": {
+    "name": "cashc",
+    "version": "0.13.0-next.1"
+  },
+  "updatedAt": "2025-11-15T19:48:24.130Z"
+}
