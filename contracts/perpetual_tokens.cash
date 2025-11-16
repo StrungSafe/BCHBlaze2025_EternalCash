@@ -1,0 +1,25 @@
+pragma cashscript ~0.13.0;
+
+contract Perpetual(pubkey user) 
+{
+    // input_i -> perpetual contract UTXO
+    // output_0 -> user payout UTXO
+    // output_1 (?) -> return remaining perpetual contract UTXO unless EOL
+    function release() {
+        bytes25 userBytecode = new LockingBytecodeP2PKH(hash160(user));
+        require(tx.outputs[0].lockingBytecode == userBytecode);
+        
+        int initValue = tx.inputs[this.activeInputIndex].tokenAmount;
+        int payout = max(1, (initValue / 100) * 2);
+        int serviceFee = max(1, (initValue / 1000));
+
+        require(tx.outputs[0].tokenAmount == payout);
+        require(tx.outputs[0].tokenCategory == tx.inputs[this.activeInputIndex].tokenCategory);
+
+        if(initValue > 2) {
+            require(tx.outputs[1].lockingBytecode == tx.inputs[this.activeInputIndex].lockingBytecode);
+            require(tx.outputs[1].tokenAmount == initValue - payout - serviceFee);
+            require(tx.outputs[1].tokenCategory == tx.inputs[this.activeInputIndex].tokenCategory);
+        }
+    }
+}

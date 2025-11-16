@@ -8,7 +8,7 @@ import {
     encodeCashAddress,
 } from '@bitauth/libauth';
 
-import perpetual from './art/perpetual.json' with { type: 'json' };
+import perpetual from '../art/perpetual.json' with { type: 'json' };
 
 const secp256k1 = await instantiateSecp256k1();
 const ripemd160 = await instantiateRipemd160();

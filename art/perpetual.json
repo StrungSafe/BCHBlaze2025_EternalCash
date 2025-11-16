@@ -12,11 +12,11 @@
       "inputs": []
     }
   ],
-  "bytecode": "OP_TXINPUTCOUNT OP_2 OP_NUMEQUALVERIFY OP_TXOUTPUTCOUNT OP_3 OP_NUMEQUALVERIFY 76a914 OP_SWAP OP_HASH160 OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_EQUALVERIFY OP_0 OP_UTXOVALUE OP_DUP 64 OP_DIV OP_2 OP_MUL OP_OVER e803 OP_DIV OP_2 OP_PICK OP_2 OP_PICK OP_SUB OP_OVER OP_SUB OP_0 OP_LESSTHAN OP_IF OP_1 OP_VERIFY OP_ENDIF OP_0 OP_OUTPUTVALUE OP_2 OP_PICK OP_NUMEQUALVERIFY OP_2 OP_OUTPUTVALUE OP_2SWAP OP_SUB OP_ROT OP_SUB OP_NUMEQUALVERIFY OP_2 OP_OUTPUTBYTECODE OP_0 OP_UTXOBYTECODE OP_EQUAL",
-  "source": "pragma cashscript ~0.13.0;\r\n\r\ncontract Perpetual(pubkey user) \r\n{\r\n    // input_0 -> perpetual contract UTXO\r\n    // input_1 -> service funding UTXO\r\n    // output_0 -> user payout UTXO\r\n    // output_1 -> service payout UTXO\r\n    // output_2 (?) -> return remaining perpetual contract UTXO\r\n    function release() {\r\n        require(tx.inputs.length == 2);\r\n        require(tx.outputs.length == 3);\r\n\r\n        bytes25 userBytecode = new LockingBytecodeP2PKH(hash160(user));\r\n        require(tx.outputs[0].lockingBytecode == userBytecode);\r\n        \r\n        int initValue = tx.inputs[0].value;\r\n        int payout = (initValue / 100) * 2;\r\n        int serviceFee = (initValue / 1000);\r\n\r\n        // TODO: Handle not enough to cover payout and service fee\r\n        if (initValue - payout - serviceFee < 0) {\r\n            require(true);\r\n        }\r\n\r\n        require(tx.outputs[0].value == payout);\r\n\r\n        // TODO: Handle EOL low amounts available\r\n        // TODO: Handle minimum values\r\n        // TODO: Do we need to validate if the user and return UTXO are validated? Feels like no\r\n        // servicer\r\n        // require(tx.outputs[1].value == (tx.inputs[1].value + serviceFee - 10000 sats)); // Change + service fee - transaction cost but this can be inferred and maybe we don't care?\r\n\r\n        // TODO: Handle EOL\r\n        require(tx.outputs[2].value == initValue - payout - serviceFee);\r\n        require(tx.outputs[2].lockingBytecode == tx.inputs[0].lockingBytecode);\r\n    }\r\n}\r\n",
+  "bytecode": "OP_TXINPUTCOUNT OP_2 OP_NUMEQUALVERIFY OP_TXOUTPUTCOUNT OP_3 OP_NUMEQUALVERIFY 76a914 OP_SWAP OP_HASH160 OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_EQUALVERIFY OP_0 OP_UTXOVALUE OP_DUP 64 OP_DIV OP_2 OP_MUL OP_OVER e803 OP_DIV OP_0 OP_OUTPUTVALUE OP_2 OP_PICK OP_NUMEQUALVERIFY OP_2 OP_OUTPUTVALUE OP_2SWAP OP_SUB OP_ROT OP_SUB OP_NUMEQUALVERIFY OP_2 OP_OUTPUTBYTECODE OP_0 OP_UTXOBYTECODE OP_EQUAL",
+  "source": "pragma cashscript ~0.13.0;\r\n\r\ncontract Perpetual(pubkey user) \r\n{\r\n    // input_0 -> perpetual contract UTXO\r\n    // input_1 -> service funding UTXO\r\n    // output_0 -> user payout UTXO\r\n    // output_1 -> service payout UTXO\r\n    // output_2 (?) -> return remaining perpetual contract UTXO\r\n    function release() {\r\n        require(tx.inputs.length == 2);\r\n        require(tx.outputs.length == 3);\r\n\r\n        bytes25 userBytecode = new LockingBytecodeP2PKH(hash160(user));\r\n        require(tx.outputs[0].lockingBytecode == userBytecode);\r\n        \r\n        int initValue = tx.inputs[0].value;\r\n        int payout = (initValue / 100) * 2;\r\n        int serviceFee = (initValue / 1000);\r\n\r\n        require(tx.outputs[0].value == payout);\r\n\r\n        // TODO: Handle EOL low amounts available\r\n        // TODO: Handle minimum values\r\n        // TODO: Do we need to validate if the user and return UTXO are validated? Feels like no\r\n        // servicer\r\n        // require(tx.outputs[1].value == (tx.inputs[1].value + serviceFee - 10000 sats)); // Change + service fee - transaction cost but this can be inferred and maybe we don't care?\r\n\r\n        // TODO: Handle EOL\r\n        require(tx.outputs[2].value == initValue - payout - serviceFee);\r\n        require(tx.outputs[2].lockingBytecode == tx.inputs[0].lockingBytecode);\r\n    }\r\n}\r\n",
   "debug": {
-    "bytecode": "c3529dc4539d0376a9147ca97e0288ac7e00cd8800c67601649652957802e8039652795279947894009f6351696800cc52799d52cc72947b949d52cd00c787",
-    "sourceMap": "11:16:11:32;:36::37;:8::39:1;12:16:12:33:0;:37::38;:8::40:1;14:31:14:70:0;:64::68;:56::69:1;:31::70;;;15:27:15:28:0;:16::45:1;:8::63;17:34:17:35:0;:24::42:1;18:22:18:31:0;:34::37;:22:::1;:41::42:0;:21:::1;19:26:19:35:0;:38::42;:26:::1;22:12:22:21:0;;:24::30;;:12:::1;:33::43:0;:12:::1;:46::47:0;:12:::1;:49:24:9:0;23:20:23:24;:12::26:1;22:49:24:9;26:27:26:28:0;:16::35:1;:39::45:0;;:8::47:1;35:27:35:28:0;:16::35:1;:39::57:0;::::1;:60::70:0;:39:::1;:8::72;36:27:36:28:0;:16::45:1;:59::60:0;:49::77:1;:8::79",
+    "bytecode": "c3529dc4539d0376a9147ca97e0288ac7e00cd8800c67601649652957802e8039600cc52799d52cc72947b949d52cd00c787",
+    "sourceMap": "11:16:11:32;:36::37;:8::39:1;12:16:12:33:0;:37::38;:8::40:1;14:31:14:70:0;:64::68;:56::69:1;:31::70;;;15:27:15:28:0;:16::45:1;:8::63;17:34:17:35:0;:24::42:1;18:22:18:31:0;:34::37;:22:::1;:41::42:0;:21:::1;19:26:19:35:0;:38::42;:26:::1;21:27:21:28:0;:16::35:1;:39::45:0;;:8::47:1;30:27:30:28:0;:16::35:1;:39::57:0;::::1;:60::70:0;:39:::1;:8::72;31:27:31:28:0;:16::45:1;:59::60:0;:49::77:1;:8::79",
     "logs": [],
     "requires": [
       {
@@ -32,20 +32,16 @@
         "line": 15
       },
       {
+        "ip": 30,
+        "line": 21
+      },
+      {
         "ip": 37,
-        "line": 23
+        "line": 30
       },
       {
         "ip": 43,
-        "line": 26
-      },
-      {
-        "ip": 50,
-        "line": 35
-      },
-      {
-        "ip": 56,
-        "line": 36
+        "line": 31
       }
     ]
   },
@@ -53,5 +49,5 @@
     "name": "cashc",
     "version": "0.13.0-next.1"
   },
-  "updatedAt": "2025-11-15T20:29:32.390Z"
+  "updatedAt": "2025-11-16T03:40:19.998Z"
 }

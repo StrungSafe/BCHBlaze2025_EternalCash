@@ -7,9 +7,13 @@
   "author": "StrungSafe",
   "license": "MIT",
   "scripts": {
-    "build": "cashc ./contracts/perpetual.cash --output ./art/perpetual.json",
-    "test": "yarn build && yarn test:run",
-    "test:run": "node ./test.js"
+    "build": "yarn build:perpetual && yarn build:tokens",
+    "build:perpetual": "cashc ./contracts/perpetual.cash --output ./art/perpetual.json",
+    "build:tokens": "cashc ./contracts/perpetual_tokens.cash --output ./art/perpetual_tokens.json",
+    "test": "yarn build && yarn test:all",
+    "test:all": "yarn test:perpetual && yarn test:tokens",
+    "test:perpetual": "node ./tests/perpetual.tests.js",
+    "test:tokens": "node ./tests/perpetual_tokens.tests.js"
   },
   "dependencies": {
     "cashc": "0.13.0-next.1",
