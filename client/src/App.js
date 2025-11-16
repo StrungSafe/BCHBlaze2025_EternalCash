@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Contract,
   MockNetworkProvider,
+  randomUtxo,
 } from 'cashscript';
 import {
     binToHex,
@@ -15,10 +16,10 @@ import './App.css';
 
 function App() {
   const [contract, setContract] = useState(null);
+  const [contractUtxos, setContractUtxos] = useState(null);
   const onSubmit = e => {
     e.preventDefault();
     const address = e.target.address.value;
-
     const pubKey = decodeCashAddress(address);
     console.log('verify', address, pubKey);
     const pubKeyHex = binToHex(pubKey.payload);
@@ -29,6 +30,24 @@ function App() {
 
     setContract(contract);
   };
+  useEffect(() => {
+    let disposed = false;
+    const fetch = async () => {
+      if(contract) {
+        const provider = new MockNetworkProvider();
+        provider.addUtxo(contract.tokenAddress, randomUtxo())
+        const utxos = await provider.getUtxos(contract.tokenAddress);
+        if(!disposed) {
+          setContractUtxos(utxos);
+        }
+      }
+    }
+
+    fetch();
+    return () => {
+      disposed = true;
+    }
+  }, [contract?.tokenAddress]);
   return (
     <div className="app">
       <header className="app-header">
@@ -55,7 +74,7 @@ function App() {
             )
           }
           {
-            contract && (
+            contract && (!contractUtxos || contractUtxos.length == 0) && (
               <div>
                 Send Tokens Here:<br /> { contract.tokenAddress }
               </div>
