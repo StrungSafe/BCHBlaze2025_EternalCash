@@ -12,54 +12,36 @@
       "inputs": []
     }
   ],
-  "bytecode": "76a914 OP_SWAP OP_HASH160 OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_EQUALVERIFY OP_INPUTINDEX OP_UTXOTOKENAMOUNT OP_1 OP_OVER 64 OP_DIV OP_2 OP_MUL OP_MAX OP_1 OP_2 OP_PICK e803 OP_DIV OP_MAX OP_0 OP_OUTPUTTOKENAMOUNT OP_0 OP_OUTPUTTOKENAMOUNT OP_3 OP_PICK OP_NUMEQUALVERIFY OP_0 OP_OUTPUTTOKENCATEGORY OP_INPUTINDEX OP_UTXOTOKENCATEGORY OP_EQUALVERIFY OP_3 OP_PICK OP_2 OP_GREATERTHAN OP_IF OP_1 OP_OUTPUTBYTECODE OP_INPUTINDEX OP_UTXOBYTECODE OP_EQUALVERIFY OP_1 OP_OUTPUTTOKENAMOUNT OP_4 OP_PICK OP_4 OP_PICK OP_SUB OP_3 OP_PICK OP_SUB OP_NUMEQUALVERIFY OP_1 OP_OUTPUTTOKENCATEGORY OP_INPUTINDEX OP_UTXOTOKENCATEGORY OP_EQUALVERIFY OP_ENDIF OP_2DROP OP_2DROP OP_1",
-  "source": "pragma cashscript ~0.13.0;\r\n\r\ncontract Perpetual(pubkey user) \r\n{\r\n    // input_i -> perpetual contract UTXO\r\n    // output_0 -> user payout UTXO\r\n    // output_1 (?) -> return remaining perpetual contract UTXO unless EOL\r\n    function release() {\r\n        bytes25 userBytecode = new LockingBytecodeP2PKH(hash160(user));\r\n        require(tx.outputs[0].lockingBytecode == userBytecode);\r\n        \r\n        int initValue = tx.inputs[this.activeInputIndex].tokenAmount;\r\n        int payout = max(1, (initValue / 100) * 2);\r\n        int serviceFee = max(1, (initValue / 1000));\r\n\r\n        int test = tx.outputs[0].tokenAmount;\r\n        console.log('the contract payout is', test, payout);\r\n        require(tx.outputs[0].tokenAmount == payout);\r\n        require(tx.outputs[0].tokenCategory == tx.inputs[this.activeInputIndex].tokenCategory);\r\n\r\n        // TODO: Handle EOL\r\n        if(initValue > 2) {\r\n            require(tx.outputs[1].lockingBytecode == tx.inputs[this.activeInputIndex].lockingBytecode);\r\n            require(tx.outputs[1].tokenAmount == initValue - payout - serviceFee);\r\n            require(tx.outputs[1].tokenCategory == tx.inputs[this.activeInputIndex].tokenCategory);\r\n        }\r\n    }\r\n}\r\n",
+  "bytecode": "76a914 OP_SWAP OP_HASH160 OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_EQUALVERIFY OP_INPUTINDEX OP_UTXOTOKENAMOUNT OP_1 OP_OVER 64 OP_DIV OP_2 OP_MUL OP_MAX OP_1 OP_2 OP_PICK e803 OP_DIV OP_MAX OP_0 OP_OUTPUTTOKENAMOUNT OP_2 OP_PICK OP_NUMEQUALVERIFY OP_0 OP_OUTPUTTOKENCATEGORY OP_INPUTINDEX OP_UTXOTOKENCATEGORY OP_EQUALVERIFY OP_2 OP_PICK OP_2 OP_GREATERTHAN OP_IF OP_1 OP_OUTPUTBYTECODE OP_INPUTINDEX OP_UTXOBYTECODE OP_EQUALVERIFY OP_1 OP_OUTPUTTOKENAMOUNT OP_2OVER OP_SUB OP_2 OP_PICK OP_SUB OP_NUMEQUALVERIFY OP_1 OP_OUTPUTTOKENCATEGORY OP_INPUTINDEX OP_UTXOTOKENCATEGORY OP_EQUALVERIFY OP_ENDIF OP_2DROP OP_DROP OP_1",
+  "source": "pragma cashscript ~0.13.0;\r\n\r\ncontract Perpetual(pubkey user) \r\n{\r\n    // input_i -> perpetual contract UTXO\r\n    // output_0 -> user payout UTXO\r\n    // output_1 (?) -> return remaining perpetual contract UTXO unless EOL\r\n    function release() {\r\n        bytes25 userBytecode = new LockingBytecodeP2PKH(hash160(user));\r\n        require(tx.outputs[0].lockingBytecode == userBytecode);\r\n        \r\n        int initValue = tx.inputs[this.activeInputIndex].tokenAmount;\r\n        int payout = max(1, (initValue / 100) * 2);\r\n        int serviceFee = max(1, (initValue / 1000));\r\n\r\n        require(tx.outputs[0].tokenAmount == payout);\r\n        require(tx.outputs[0].tokenCategory == tx.inputs[this.activeInputIndex].tokenCategory);\r\n\r\n        if(initValue > 2) {\r\n            require(tx.outputs[1].lockingBytecode == tx.inputs[this.activeInputIndex].lockingBytecode);\r\n            require(tx.outputs[1].tokenAmount == initValue - payout - serviceFee);\r\n            require(tx.outputs[1].tokenCategory == tx.inputs[this.activeInputIndex].tokenCategory);\r\n        }\r\n    }\r\n}\r\n",
   "debug": {
-    "bytecode": "0376a9147ca97e0288ac7e00cd88c0d051780164965295a451527902e80396a400d300d353799d00d1c0ce88537952a06351cdc0c78851d354795479945379949d51d1c0ce88686d6d51",
-    "sourceMap": "9:31:9:70;:64::68;:56::69:1;:31::70;;;10:27:10:28:0;:16::45:1;:8::63;12:34:12:55:0;:24::68:1;13:25:13:26:0;:29::38;:41::44;:29:::1;:48::49:0;:28:::1;:21::50;14:29:14:30:0;:33::42;;:45::49;:33:::1;:25::51;16:30:16:31:0;:19::44:1;18:27:18:28:0;:16::41:1;:45::51:0;;:8::53:1;19:27:19:28:0;:16::43:1;:57::78:0;:47::93:1;:8::95;22:11:22:20:0;;:23::24;:11:::1;:26:26:9:0;23:31:23:32;:20::49:1;:63::84:0;:53::101:1;:12::103;24:31:24:32:0;:20::45:1;:49::58:0;;:61::67;;:49:::1;:70::80:0;;:49:::1;:12::82;25:31:25:32:0;:20::47:1;:61::82:0;:51::97:1;:12::99;22:26:26:9;8:4:27:5;;",
-    "logs": [
-      {
-        "ip": 27,
-        "line": 17,
-        "data": [
-          "the contract payout is",
-          {
-            "stackIndex": 0,
-            "type": "int",
-            "ip": 27
-          },
-          {
-            "stackIndex": 2,
-            "type": "int",
-            "ip": 27
-          }
-        ]
-      }
-    ],
+    "bytecode": "0376a9147ca97e0288ac7e00cd88c0d051780164965295a451527902e80396a400d352799d00d1c0ce88527952a06351cdc0c78851d370945279949d51d1c0ce88686d7551",
+    "sourceMap": "9:31:9:70;:64::68;:56::69:1;:31::70;;;10:27:10:28:0;:16::45:1;:8::63;12:34:12:55:0;:24::68:1;13:25:13:26:0;:29::38;:41::44;:29:::1;:48::49:0;:28:::1;:21::50;14:29:14:30:0;:33::42;;:45::49;:33:::1;:25::51;16:27:16:28:0;:16::41:1;:45::51:0;;:8::53:1;17:27:17:28:0;:16::43:1;:57::78:0;:47::93:1;:8::95;19:11:19:20:0;;:23::24;:11:::1;:26:23:9:0;20:31:20:32;:20::49:1;:63::84:0;:53::101:1;:12::103;21:31:21:32:0;:20::45:1;:49::67:0;::::1;:70::80:0;;:49:::1;:12::82;22:31:22:32:0;:20::47:1;:61::82:0;:51::97:1;:12::99;19:26:23:9;8:4:24:5;;",
+    "logs": [],
     "requires": [
       {
         "ip": 9,
         "line": 10
       },
       {
-        "ip": 31,
-        "line": 18
+        "ip": 29,
+        "line": 16
       },
       {
-        "ip": 36,
-        "line": 19
+        "ip": 34,
+        "line": 17
       },
       {
-        "ip": 46,
-        "line": 23
+        "ip": 44,
+        "line": 20
+      },
+      {
+        "ip": 52,
+        "line": 21
       },
       {
         "ip": 57,
-        "line": 24
-      },
-      {
-        "ip": 62,
-        "line": 25
+        "line": 22
       }
     ]
   },
@@ -67,5 +49,5 @@
     "name": "cashc",
     "version": "0.13.0-next.1"
   },
-  "updatedAt": "2025-11-16T03:40:20.380Z"
+  "updatedAt": "2025-11-16T03:41:18.607Z"
 }
