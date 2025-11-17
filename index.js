@@ -65,8 +65,8 @@ const payout = bigIntMax(1n, (initial / 100n) * 2n);
 const fee = bigIntMax(1n, initial / 1000n);
 const remainder = initial - payout - fee;
 
-if(remainder > 2) {
-    new TransactionBuilder({ provider })
+if(remainder > 0) {
+    await new TransactionBuilder({ provider })
         .addInput(perpetualUtxo, contract.unlock.release())
         .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
         .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetualUtxo.token.category } })
@@ -74,15 +74,15 @@ if(remainder > 2) {
         .addOutput({ to: service.address, amount: 1000n, token: { amount: fee, category: perpetualUtxo.token.category } })
         .send();
 } else {
-    if(fee > 0) {
-        new TransactionBuilder({ provider })
+    if(initial - payout > 0) {
+        await new TransactionBuilder({ provider })
             .addInput(perpetualUtxo, contract.unlock.release())
             .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
             .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetualUtxo.token.category } })
-            .addOutput({ to: service.address, amount: 1000n, token: { amount: fee, category: perpetualUtxo.token.category } })
+            .addOutput({ to: service.address, amount: 1000n, token: { amount: initial - payout, category: perpetualUtxo.token.category } })
             .send();
     } else {
-        new TransactionBuilder({ provider })
+        await new TransactionBuilder({ provider })
             .addInput(perpetualUtxo, contract.unlock.release())
             .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
             .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetualUtxo.token.category } })
