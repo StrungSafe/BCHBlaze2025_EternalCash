@@ -8,16 +8,16 @@ import {
   TransactionBuilder,
 } from 'cashscript';
 import {
-    instantiateSecp256k1,
-    instantiateRipemd160,
-    instantiateSha256,
-    generatePrivateKey,
-    binToHex,
-    decodeCashAddress,
-    encodeCashAddress,
+  instantiateSecp256k1,
+  instantiateRipemd160,
+  instantiateSha256,
+  generatePrivateKey,
+  binToHex,
+  decodeCashAddress,
+  encodeCashAddress,
 } from '@bitauth/libauth';
 
-import perpetual from './perpetual_tokens.json' with { type: 'json' };
+import perpetuity from './perpetuity_tokens.json' with { type: 'json' };
 
 import './App.css';
 
@@ -28,13 +28,13 @@ const ripemd160 = await instantiateRipemd160();
 const sha256 = await instantiateSha256();
 
 const generateWallet = (network) => {
-    const privateKey = generatePrivateKey();
-    const pubKeyBin = secp256k1.derivePublicKeyCompressed(privateKey);
-    const pubKeyHex = binToHex(pubKeyBin);
-    const signatureTemplate = new SignatureTemplate(privateKey);
-    const pubKeyHash = ripemd160.hash(sha256.hash(pubKeyBin));
-    const encoded = encodeCashAddress({ prefix: network === 'mainnet' ? 'bitcoincash' : 'bchtest', type: 'p2pkhWithTokens', payload: pubKeyHash });
-    return { privateKey, pubKeyHex, pubKeyHash, signatureTemplate, address: typeof encoded === 'string' ? encoded : encoded.address };
+  const privateKey = generatePrivateKey();
+  const pubKeyBin = secp256k1.derivePublicKeyCompressed(privateKey);
+  const pubKeyHex = binToHex(pubKeyBin);
+  const signatureTemplate = new SignatureTemplate(privateKey);
+  const pubKeyHash = ripemd160.hash(sha256.hash(pubKeyBin));
+  const encoded = encodeCashAddress({ prefix: network === 'mainnet' ? 'bitcoincash' : 'bchtest', type: 'p2pkhWithTokens', payload: pubKeyHash });
+  return { privateKey, pubKeyHex, pubKeyHash, signatureTemplate, address: typeof encoded === 'string' ? encoded : encoded.address };
 };
 
 function App() {
@@ -44,12 +44,19 @@ function App() {
   const [network, setNetwork] = useState('mocknet');
   const [provider] = useState(new MockNetworkProvider());
   const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState(null);
   const onSubmit = useCallback(e => {
     e.preventDefault();
     const address = e.target.address.value;
+
+    if(!address) {
+      setFormError('No address provided');
+      return;
+    };
+
     const pubKey = decodeCashAddress(address);
     const pubKeyHex = binToHex(pubKey.payload);
-    const contract = new Contract(perpetual, [pubKeyHex], { provider });
+    const contract = new Contract(perpetuity, [pubKeyHex], { provider });
 
     // mock network testing
     provider.reset();
@@ -66,39 +73,39 @@ function App() {
     const feesUtxo = randomUtxo();
     provider.addUtxo(executor.address, feesUtxo);
 
-    const perpetualUtxo = contractUtxos[0];
+    const perpetuityUtxo = contractUtxos[0];
     const service = executor;
 
-    const initial = perpetualUtxo.token.amount;
+    const initial = perpetuityUtxo.token.amount;
     const payout = bigIntMax(1n, (initial / 100n) * 2n);
     const fee = bigIntMax(1n, initial / 1000n);
     const remainder = initial - payout - fee;
-    if(remainder > 0) {
-        await new TransactionBuilder({ provider })
-            .addInput(perpetualUtxo, contract.unlock.release())
-            .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
-            .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetualUtxo.token.category } })
-            .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: remainder, category: perpetualUtxo.token.category } })
-            .addOutput({ to: service.address, amount: 1000n, token: { amount: fee, category: perpetualUtxo.token.category } })
-            .send();
+    if (remainder > 0) {
+      await new TransactionBuilder({ provider })
+        .addInput(perpetuityUtxo, contract.unlock.release())
+        .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
+        .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetuityUtxo.token.category } })
+        .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: remainder, category: perpetuityUtxo.token.category } })
+        .addOutput({ to: service.address, amount: 1000n, token: { amount: fee, category: perpetuityUtxo.token.category } })
+        .send();
     } else {
-        if(initial - payout > 0) {
-            // potentially a partial fee payout
-            await new TransactionBuilder({ provider })
-                .addInput(perpetualUtxo, contract.unlock.release())
-                .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
-                .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetualUtxo.token.category } })
-                .addOutput({ to: service.address, amount: 1000n, token: { amount: initial - payout, category: perpetualUtxo.token.category } })
-                .send();
-        } else { 
-            // lose out on cost to execute? or rework this to do a balloon payment?
-            await new TransactionBuilder({ provider })
-                .addInput(perpetualUtxo, contract.unlock.release())
-                .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
-                .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetualUtxo.token.category } })
-                .addOutput({ to: service.address, amount: 1000n })
-                .send();
-        }
+      if (initial - payout > 0) {
+        // potentially a partial fee payout
+        await new TransactionBuilder({ provider })
+          .addInput(perpetuityUtxo, contract.unlock.release())
+          .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
+          .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetuityUtxo.token.category } })
+          .addOutput({ to: service.address, amount: 1000n, token: { amount: initial - payout, category: perpetuityUtxo.token.category } })
+          .send();
+      } else {
+        // lose out on cost to execute? or rework this to do a balloon payment?
+        await new TransactionBuilder({ provider })
+          .addInput(perpetuityUtxo, contract.unlock.release())
+          .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
+          .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetuityUtxo.token.category } })
+          .addOutput({ to: service.address, amount: 1000n })
+          .send();
+      }
     }
 
     const updated = await provider.getUtxos(contract.tokenAddress);
@@ -108,9 +115,9 @@ function App() {
   useEffect(() => {
     let disposed = false;
     const fetch = async () => {
-      if(contract) { // if provider changes but contract was loaded then this wouldn't reload...
+      if (contract) { // if provider changes but contract was loaded then this wouldn't reload...
         const utxos = await provider.getUtxos(contract.tokenAddress);
-        if(!disposed) {
+        if (!disposed) {
           setContractUtxos(utxos);
         }
       }
@@ -125,32 +132,34 @@ function App() {
     <div className="app">
       <header className="app-header">
         <h1>
-          PerpetualThis
+          PerpetuityThis
         </h1>
       </header>
 
       <main className="app-main">
         <div className="app-content">
-          
           {
             !contract && (
               <>
-                <div>
+                <div style={{ paddingBottom: '1rem' }}>
                   <select name="network" value={network} onChange={(e) => setNetwork(e.target.value)}>
                     <option value="mocknet">Mocknet</option>
                     <option value="chipnet">TODO:Chipnet</option>
                     <option value="mainnet">TODO:Mainnet</option>
                   </select>
                 </div>
-                <form onSubmit={onSubmit}>
+                <form onSubmit={onSubmit} style={{ display: 'grid', rowGap: '0.5rem' }}>
                   <div>
-                    Enter BCH Address:
-                  </div>
-                  <div>
+                    <label htmlFor='address' style={{ marginRight: '0.5rem' }}>
+                      Enter BCH Address:
+                    </label>
                     <input id="address" type="text" />
                   </div>
                   <div>
                     <input type="submit" value="Start" />
+                  </div>
+                  <div style={{ color: 'red' }}>
+                    {formError}
                   </div>
                 </form>
               </>
@@ -159,21 +168,21 @@ function App() {
           {
             contract && (!contractUtxos || contractUtxos.length === 0) && (
               <div>
-                Send Tokens Here:<br /> { contract.tokenAddress }
+                Send Tokens Here:<br /> {contract.tokenAddress}
               </div>
             )
           }
           {
-            contract && contractUtxos?.length > 0  && (
-              <div>
-                <div>
-                  There {( contractUtxos.length > 1 ? 'are' : 'is')} {contractUtxos.length} perpetual contract{( contractUtxos.length > 1 ? 's' : '')} currently running
+            contract && contractUtxos?.length > 0 && (
+              <div style={{ display: 'grid', rowGap: '1rem' }}>
+                <div style={{ display: 'grid', rowGap: '0.5rem' }}>
+                  There {(contractUtxos.length > 1 ? 'are' : 'is')} {contractUtxos.length} perpetuity contract{(contractUtxos.length > 1 ? 's' : '')} currently running
 
                   {
                     contractUtxos.map(utxo => (
                       <div>
-                        sats: {utxo?.satoshis} <br />
-                        token: {utxo?.token.category} <br /> 
+                        trxid: {utxo.txid} <br />
+                        token: {utxo?.token.category} <br />
                         amount: {utxo?.token.amount}
                       </div>
                     ))

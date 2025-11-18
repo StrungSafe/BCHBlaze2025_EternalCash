@@ -8,7 +8,7 @@ import {
     encodeCashAddress,
 } from '@bitauth/libauth';
 
-import perpetual from '../art/perpetual_tokens.json' with { type: 'json' };
+import perpetuity from '../art/perpetuity_tokens.json' with { type: 'json' };
 
 const secp256k1 = await instantiateSecp256k1();
 const ripemd160 = await instantiateRipemd160();
@@ -58,8 +58,8 @@ const service = generateWallet();
 const untrusted = generateWallet();
 
 const provider = new MockNetworkProvider({ updateUtxoSet: false });
-const contract = new Contract(perpetual, [user.pubKeyHash], { provider });
-const perpetualUtxo = randomUtxo({
+const contract = new Contract(perpetuity, [user.pubKeyHash], { provider });
+const perpetuityUtxo = randomUtxo({
     amount: 1000n,
     token: randomToken({
         amount: 10000000n,
@@ -73,32 +73,32 @@ const endOfLifeUtxo = randomUtxo({
     }),
 });
 
-provider.addUtxo(contract.address, perpetualUtxo);
+provider.addUtxo(contract.address, perpetuityUtxo);
 provider.addUtxo(contract.address, endOfLifeUtxo);
 provider.addUtxo(service.address, feesUtxo);
 
 await ensureSuccess("Release_WhenInvoked_UserGetsPayout", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
-    .addOutput({ to: user.address, amount: 1000n, token: { amount: 200000n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790000n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: service.address, amount: 1000n, token: { amount: 10000n, category: perpetualUtxo.token.category } })
+    .addOutput({ to: user.address, amount: 1000n, token: { amount: 200000n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790000n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: service.address, amount: 1000n, token: { amount: 10000n, category: perpetuityUtxo.token.category } })
 );
 
 await ensureSuccess("Release_WhenInvoked_AnyoneCanService", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
-    .addOutput({ to: user.address, amount: 1000n, token: { amount: 200000n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790000n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: untrusted.address, amount: 1000n, token: { amount: 10000n, category: perpetualUtxo.token.category } })
+    .addOutput({ to: user.address, amount: 1000n, token: { amount: 200000n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790000n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: untrusted.address, amount: 1000n, token: { amount: 10000n, category: perpetuityUtxo.token.category } })
 );
 
 await ensureSuccess("Release_WhenInvoked_CanPayForTransaction", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
-    .addOutput({ to: user.address, amount: 1000n, token: { amount: 200000n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790000n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: untrusted.address, amount: 1000n, token: { amount: 10000n, category: perpetualUtxo.token.category } })
+    .addOutput({ to: user.address, amount: 1000n, token: { amount: 200000n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790000n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: untrusted.address, amount: 1000n, token: { amount: 10000n, category: perpetuityUtxo.token.category } })
 );
 
 await ensureSuccess("Release_WhenInvoked_AtEndOfLife", () => new TransactionBuilder({ provider })
@@ -111,59 +111,59 @@ await ensureSuccess("Release_WhenInvoked_AtEndOfLife", () => new TransactionBuil
 /*****************************/
 
 await ensureFailure("Release_WhenInvoked_WithLessThanPayout", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
-    .addOutput({ to: user.address, amount: 1000n, token: { amount: 199999n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790000n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: service.address, amount: 1000n, token: { amount: 10000n, category: perpetualUtxo.token.category } })
+    .addOutput({ to: user.address, amount: 1000n, token: { amount: 199999n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790000n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: service.address, amount: 1000n, token: { amount: 10000n, category: perpetuityUtxo.token.category } })
 );
 
 await ensureFailure("Release_WhenInvoked_WithMoreThanPayout", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
-    .addOutput({ to: user.address, amount: 1000n, token: { amount: 200001n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790000n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: service.address, amount: 1000n, token: { amount: 10000n, category: perpetualUtxo.token.category } })
+    .addOutput({ to: user.address, amount: 1000n, token: { amount: 200001n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790000n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: service.address, amount: 1000n, token: { amount: 10000n, category: perpetuityUtxo.token.category } })
 );
 
 await ensureFailure("Release_WhenInvoked_LessReturnedThanExpected", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
-    .addOutput({ to: user.address, amount: 1000n, token: { amount: 200000n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9789999n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: service.address, amount: 1000n, token: { amount: 10000n, category: perpetualUtxo.token.category } })
+    .addOutput({ to: user.address, amount: 1000n, token: { amount: 200000n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9789999n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: service.address, amount: 1000n, token: { amount: 10000n, category: perpetuityUtxo.token.category } })
 );
 
 await ensureFailure("Release_WhenInvoked_MoreReturnedThanExpected", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
-    .addOutput({ to: user.address, amount: 1000n, token: { amount: 200000n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790001n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: service.address, amount: 1000n, token: { amount: 10000n, category: perpetualUtxo.token.category } })
+    .addOutput({ to: user.address, amount: 1000n, token: { amount: 200000n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790001n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: service.address, amount: 1000n, token: { amount: 10000n, category: perpetuityUtxo.token.category } })
 );
 
 await ensureFailure("Release_WhenInvoked_WithUntrustedPayoutAddress", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
-    .addOutput({ to: untrusted.address, amount: 1000n, token: { amount: 200000n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790000n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: service.address, amount: 1000n, token: { amount: 10000n, category: perpetualUtxo.token.category } })
+    .addOutput({ to: untrusted.address, amount: 1000n, token: { amount: 200000n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790000n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: service.address, amount: 1000n, token: { amount: 10000n, category: perpetuityUtxo.token.category } })
 );
 
 await ensureFailure("Release_WhenInvoked_WithUntrustedReturnAddress", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
-    .addOutput({ to: user.address, amount: 1000n, token: { amount: 200000n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: untrusted.address, amount: 1000n, token: { amount: 9790000n, category: perpetualUtxo.token.category } })
-    .addOutput({ to: service.address, amount: 1000n, token: { amount: 10000n, category: perpetualUtxo.token.category } })
+    .addOutput({ to: user.address, amount: 1000n, token: { amount: 200000n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: untrusted.address, amount: 1000n, token: { amount: 9790000n, category: perpetuityUtxo.token.category } })
+    .addOutput({ to: service.address, amount: 1000n, token: { amount: 10000n, category: perpetuityUtxo.token.category } })
 );
 
 await ensureFailure("Release_WhenInvoked_WithDifferentPayoutToken", () => {
     const newToken = randomToken();
     return new TransactionBuilder({ provider })
-        .addInput(perpetualUtxo, contract.unlock.release())
+        .addInput(perpetuityUtxo, contract.unlock.release())
         .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
         .addOutput({ to: user.address, amount: 1000n, token: { amount: 200000n, category: newToken.category } })
-        .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790000n, category: perpetualUtxo.token.category } })
-        .addOutput({ to: service.address, amount: 1000n, token: { amount: 210000n, category: perpetualUtxo.token.category } });
+        .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: 9790000n, category: perpetuityUtxo.token.category } })
+        .addOutput({ to: service.address, amount: 1000n, token: { amount: 210000n, category: perpetuityUtxo.token.category } });
 });

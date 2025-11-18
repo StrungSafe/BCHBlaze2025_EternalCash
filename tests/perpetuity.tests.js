@@ -8,7 +8,7 @@ import {
     encodeCashAddress,
 } from '@bitauth/libauth';
 
-import perpetual from '../art/perpetual.json' with { type: 'json' };
+import perpetuity from '../art/perpetuity.json' with { type: 'json' };
 
 const secp256k1 = await instantiateSecp256k1();
 const ripemd160 = await instantiateRipemd160();
@@ -58,8 +58,8 @@ const attacker = generateWallet();
 const service = generateWallet();
 
 const provider = new MockNetworkProvider({ updateUtxoSet: false });
-const contract = new Contract(perpetual, [user.pubKeyHex], { provider });
-const perpetualUtxo = randomUtxo({ 
+const contract = new Contract(perpetuity, [user.pubKeyHex], { provider });
+const perpetuityUtxo = randomUtxo({ 
     satoshis: 10000000n,
 });
 const feesUtxo = randomUtxo({
@@ -69,7 +69,7 @@ const endUtxo = randomUtxo({
     satoshis: 1n,
 });
 
-provider.addUtxo(contract.address, perpetualUtxo);
+provider.addUtxo(contract.address, perpetuityUtxo);
 provider.addUtxo(service.address, feesUtxo);
 provider.addUtxo(contract.address, endUtxo);
 
@@ -80,7 +80,7 @@ provider.addUtxo(contract.address, endUtxo);
 // );
 
 await ensureSuccess("Release_WhenInvoked_UserGetsPayout", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
     .addOutput({ to: user.address, amount: 200000n })
     .addOutput({ to: service.address, amount: 10000n })
@@ -88,7 +88,7 @@ await ensureSuccess("Release_WhenInvoked_UserGetsPayout", () => new TransactionB
 );
 
 await ensureSuccess("Release_WhenInvoked_AnyoneCanService", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
     .addOutput({ to: user.address, amount: 200000n })
     .addOutput({ to: attacker.address, amount: 10000n })
@@ -96,7 +96,7 @@ await ensureSuccess("Release_WhenInvoked_AnyoneCanService", () => new Transactio
 );
 
 await ensureSuccess("Release_WhenInvoked_CanPayForTransaction", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
     .addOutput({ to: user.address, amount: 200000n })
     .addOutput({ to: attacker.address, amount: 10000n })
@@ -104,7 +104,7 @@ await ensureSuccess("Release_WhenInvoked_CanPayForTransaction", () => new Transa
 );
 
 await ensureFailure("Release_WhenInvoked_WithLessThanPayout", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
     .addOutput({ to: user.address, amount: 199999n })
     .addOutput({ to: service.address, amount: 10000n })
@@ -112,7 +112,7 @@ await ensureFailure("Release_WhenInvoked_WithLessThanPayout", () => new Transact
 );
 
 await ensureFailure("Release_WhenInvoked_WithMoreThanPayout", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
     .addOutput({ to: user.address, amount: 200001n })
     .addOutput({ to: service.address, amount: 10000n })
@@ -120,7 +120,7 @@ await ensureFailure("Release_WhenInvoked_WithMoreThanPayout", () => new Transact
 );
 
 await ensureFailure("Release_WhenInvoked_LessReturnedThanExpected", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
     .addOutput({ to: user.address, amount: 200000n })
     .addOutput({ to: service.address, amount: 10000n })
@@ -128,7 +128,7 @@ await ensureFailure("Release_WhenInvoked_LessReturnedThanExpected", () => new Tr
 );
 
 await ensureFailure("Release_WhenInvoked_MoreReturnedThanExpected", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
     .addOutput({ to: user.address, amount: 200000n })
     .addOutput({ to: service.address, amount: 10000n })
@@ -136,7 +136,7 @@ await ensureFailure("Release_WhenInvoked_MoreReturnedThanExpected", () => new Tr
 );
 
 await ensureFailure("Release_WhenInvoked_WithAttackerPayoutAddress", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
     .addOutput({ to: attacker.address, amount: 200000n })
     .addOutput({ to: service.address, amount: 10000n })
@@ -144,7 +144,7 @@ await ensureFailure("Release_WhenInvoked_WithAttackerPayoutAddress", () => new T
 );
 
 await ensureFailure("Release_WhenInvoked_WithAttackerReturnAddress", () => new TransactionBuilder({ provider })
-    .addInput(perpetualUtxo, contract.unlock.release())
+    .addInput(perpetuityUtxo, contract.unlock.release())
     .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
     .addOutput({ to: user.address, amount: 200000n })
     .addOutput({ to: service.address, amount: 10000n })

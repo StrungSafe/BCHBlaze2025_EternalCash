@@ -22,3 +22,9 @@ Yarn v1.22.22
 1. Implement a timelock
 1. Implement Electrum Network
 1. UI Improvements
+
+### Potential Enhancements
+
+1. Adjustable payout rate
+1. Adjustable fee rate
+1. BCH Pay For Execution, Instead of CashTokens

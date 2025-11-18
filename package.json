@@ -1,20 +1,23 @@
 {
-  "name": "perpetualthis",
+  "name": "perpetuity-this-client",
   "type": "module",
   "version": "0.1.0",
-  "description": "A perpetual contract on BCH",
+  "description": "A perpetuity contract on BCH",
   "author": "StrungSafe",
   "license": "MIT",
   "scripts": {
     "run:service": "node ./index.js",
-    "build": "yarn && yarn build:perpetual && yarn build:tokens && yarn build:client",
-    "build:perpetual": "cashc ./contracts/perpetual.cash --output ./art/perpetual.json",
-    "build:tokens": "cashc ./contracts/perpetual_tokens.cash --output ./art/perpetual_tokens.json",
-    "build:client": "cashc ./contracts/perpetual_tokens.cash --output ./client/src/perpetual_tokens.json",
+    "build": "yarn && yarn build:test",
+    "build:test": "yarn build:all && yarn test:all",
+    "build:notest": "yarn build:all",
+    "build:all": "yarn build:perpetuity && yarn build:tokens && yarn build:client",
+    "build:perpetuity": "cashc ./contracts/perpetuity.cash --output ./art/perpetuity.json",
+    "build:tokens": "cashc ./contracts/perpetuity_tokens.cash --output ./art/perpetuity_tokens.json",
+    "build:client": "cashc ./contracts/perpetuity_tokens.cash --output ./client/src/perpetuity_tokens.json",
     "test": "yarn build && yarn test:all",
-    "test:all": "yarn test:perpetual && yarn test:tokens",
-    "test:perpetual": "node ./tests/perpetual.tests.js",
-    "test:tokens": "node ./tests/perpetual_tokens.tests.js"
+    "test:all": "yarn test:perpetuity && yarn test:tokens",
+    "test:perpetuity": "node ./tests/perpetuity.tests.js",
+    "test:tokens": "node ./tests/perpetuity_tokens.tests.js"
   },
   "dependencies": {
     "cashc": "0.13.0-next.1",

@@ -16,7 +16,7 @@ import {
     decodeCashAddress
 } from '@bitauth/libauth';
 
-import perpetual from './art/perpetual_tokens.json' with { type: 'json' };
+import perpetuity from './art/perpetuity.json' with { type: 'json' };
 
 const secp256k1 = await instantiateSecp256k1();
 const ripemd160 = await instantiateRipemd160();
@@ -46,8 +46,8 @@ const user = { address: users[0], pubKeyHex: getPubKeyHex(users[0]) }; // just w
 const service = generateWallet();
 
 const provider = new MockNetworkProvider({ updateUtxoSet: false });
-const contract = new Contract(perpetual, [user.pubKeyHex], { provider });
-const perpetualUtxo = randomUtxo({
+const contract = new Contract(perpetuity, [user.pubKeyHex], { provider });
+const perpetuityUtxo = randomUtxo({
     amount: 1000n,
     token: randomToken({
         amount: 10000000n,
@@ -55,37 +55,37 @@ const perpetualUtxo = randomUtxo({
 });
 const feesUtxo = randomUtxo();
 
-provider.addUtxo(contract.address, perpetualUtxo);
+provider.addUtxo(contract.address, perpetuityUtxo);
 provider.addUtxo(service.address, feesUtxo);
 
 const bigIntMax = (...args) => args.reduce((m, e) => e > m ? e : m);
 
-const initial = perpetualUtxo.token.amount;
+const initial = perpetuityUtxo.token.amount;
 const payout = bigIntMax(1n, (initial / 100n) * 2n);
 const fee = bigIntMax(1n, initial / 1000n);
 const remainder = initial - payout - fee;
 
 if(remainder > 0) {
     await new TransactionBuilder({ provider })
-        .addInput(perpetualUtxo, contract.unlock.release())
+        .addInput(perpetuityUtxo, contract.unlock.release())
         .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
-        .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetualUtxo.token.category } })
-        .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: remainder, category: perpetualUtxo.token.category } })
-        .addOutput({ to: service.address, amount: 1000n, token: { amount: fee, category: perpetualUtxo.token.category } })
+        .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetuityUtxo.token.category } })
+        .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: remainder, category: perpetuityUtxo.token.category } })
+        .addOutput({ to: service.address, amount: 1000n, token: { amount: fee, category: perpetuityUtxo.token.category } })
         .send();
 } else {
     if(initial - payout > 0) {
         await new TransactionBuilder({ provider })
-            .addInput(perpetualUtxo, contract.unlock.release())
+            .addInput(perpetuityUtxo, contract.unlock.release())
             .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
-            .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetualUtxo.token.category } })
-            .addOutput({ to: service.address, amount: 1000n, token: { amount: initial - payout, category: perpetualUtxo.token.category } })
+            .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetuityUtxo.token.category } })
+            .addOutput({ to: service.address, amount: 1000n, token: { amount: initial - payout, category: perpetuityUtxo.token.category } })
             .send();
     } else {
         await new TransactionBuilder({ provider })
-            .addInput(perpetualUtxo, contract.unlock.release())
+            .addInput(perpetuityUtxo, contract.unlock.release())
             .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
-            .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetualUtxo.token.category } })
+            .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetuityUtxo.token.category } })
             .addOutput({ to: service.address, amount: 1000n })
             .send();
     }

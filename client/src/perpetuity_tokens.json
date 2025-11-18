@@ -1,0 +1,84 @@
+{
+  "contractName": "Perpetuity",
+  "constructorInputs": [
+    {
+      "name": "pubKeyHash",
+      "type": "bytes20"
+    }
+  ],
+  "abi": [
+    {
+      "name": "release",
+      "inputs": []
+    }
+  ],
+  "bytecode": "76a914 OP_SWAP OP_CAT 88ac OP_CAT OP_INPUTINDEX OP_OUTPUTBYTECODE OP_EQUALVERIFY OP_INPUTINDEX OP_UTXOTOKENAMOUNT OP_1 OP_OVER 64 OP_DIV OP_2 OP_MUL OP_MAX OP_1 OP_2 OP_PICK e803 OP_DIV OP_MAX OP_2 OP_PICK OP_2 OP_PICK OP_SUB OP_SWAP OP_SUB OP_INPUTINDEX OP_OUTPUTTOKENAMOUNT OP_ROT OP_NUMEQUALVERIFY OP_INPUTINDEX OP_OUTPUTTOKENCATEGORY OP_INPUTINDEX OP_UTXOTOKENCATEGORY OP_EQUALVERIFY OP_SWAP OP_2 OP_GREATERTHAN OP_IF OP_INPUTINDEX OP_1ADD OP_OUTPUTBYTECODE OP_INPUTINDEX OP_UTXOBYTECODE OP_EQUALVERIFY OP_INPUTINDEX OP_1ADD OP_OUTPUTTOKENAMOUNT OP_OVER OP_NUMEQUALVERIFY OP_INPUTINDEX OP_1ADD OP_OUTPUTTOKENCATEGORY OP_INPUTINDEX OP_UTXOTOKENCATEGORY OP_EQUALVERIFY OP_ENDIF OP_DROP OP_1",
+  "source": "pragma cashscript ~0.13.0;\r\n\r\ncontract Perpetuity(bytes20 pubKeyHash) \r\n{\r\n    // input_i -> Perpetuity contract UTXO\r\n    // output_0 -> user payout UTXO\r\n    // output_1 (?) -> return remaining Perpetuity contract UTXO unless EOL\r\n    function release() {\r\n        bytes25 userBytecode = new LockingBytecodeP2PKH(pubKeyHash);\r\n        require(tx.outputs[this.activeInputIndex].lockingBytecode == userBytecode);\r\n        \r\n        int initValue = tx.inputs[this.activeInputIndex].tokenAmount;\r\n        int payout = max(1, (initValue / 100) * 2);\r\n        int serviceFee = max(1, (initValue / 1000));\r\n        int remainder = initValue - payout - serviceFee;\r\n\r\n        console.log('starting amount', initValue, 'paying to user', payout, 'taking as a service fee', serviceFee, 'remainder amount', remainder);\r\n\r\n        require(tx.outputs[this.activeInputIndex].tokenAmount == payout);\r\n        require(tx.outputs[this.activeInputIndex].tokenCategory == tx.inputs[this.activeInputIndex].tokenCategory);\r\n\r\n        if(initValue > 2) {\r\n            require(tx.outputs[this.activeInputIndex + 1].lockingBytecode == tx.inputs[this.activeInputIndex].lockingBytecode);\r\n            require(tx.outputs[this.activeInputIndex + 1].tokenAmount == remainder);\r\n            require(tx.outputs[this.activeInputIndex + 1].tokenCategory == tx.inputs[this.activeInputIndex].tokenCategory);\r\n        }\r\n    }\r\n}\r\n",
+  "debug": {
+    "bytecode": "0376a9147c7e0288ac7ec0cd88c0d051780164965295a451527902e80396a452795279947c94c0d37b9dc0d1c0ce887c52a063c08bcdc0c788c08bd3789dc08bd1c0ce88687551",
+    "sourceMap": "9:31:9:67;:56::66;:31::67:1;;;10:27:10:48:0;:16::65:1;:8::83;12:34:12:55:0;:24::68:1;13:25:13:26:0;:29::38;:41::44;:29:::1;:48::49:0;:28:::1;:21::50;14:29:14:30:0;:33::42;;:45::49;:33:::1;:25::51;15:24:15:33:0;;:36::42;;:24:::1;:45::55:0;:24:::1;19:27:19:48:0;:16::61:1;:65::71:0;:8::73:1;20:27:20:48:0;:16::63:1;:77::98:0;:67::113:1;:8::115;22:11:22:20:0;:23::24;:11:::1;:26:26:9:0;23:31:23:52;:::56:1;:20::73;:87::108:0;:77::125:1;:12::127;24:31:24:52:0;:::56:1;:20::69;:73::82:0;:12::84:1;25:31:25:52:0;:::56:1;:20::71;:85::106:0;:75::121:1;:12::123;22:26:26:9;8:4:27:5;",
+    "logs": [
+      {
+        "ip": 31,
+        "line": 17,
+        "data": [
+          "starting amount",
+          {
+            "stackIndex": 2,
+            "type": "int",
+            "ip": 31
+          },
+          "paying to user",
+          {
+            "stackIndex": 1,
+            "type": "int",
+            "ip": 31
+          },
+          "taking as a service fee",
+          {
+            "type": "int",
+            "stackIndex": 1,
+            "ip": 29
+          },
+          "remainder amount",
+          {
+            "stackIndex": 0,
+            "type": "int",
+            "ip": 31
+          }
+        ]
+      }
+    ],
+    "requires": [
+      {
+        "ip": 8,
+        "line": 10
+      },
+      {
+        "ip": 34,
+        "line": 19
+      },
+      {
+        "ip": 39,
+        "line": 20
+      },
+      {
+        "ip": 49,
+        "line": 23
+      },
+      {
+        "ip": 54,
+        "line": 24
+      },
+      {
+        "ip": 60,
+        "line": 25
+      }
+    ]
+  },
+  "compiler": {
+    "name": "cashc",
+    "version": "0.13.0-next.1"
+  },
+  "updatedAt": "2025-11-18T18:24:44.582Z"
+}

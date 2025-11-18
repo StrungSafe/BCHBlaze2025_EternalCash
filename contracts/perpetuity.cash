@@ -1,12 +1,12 @@
 pragma cashscript ~0.13.0;
 
-contract Perpetual(pubkey user) 
+contract Perpetuity(pubkey user) 
 {
-    // input_0 -> perpetual contract UTXO
+    // input_0 -> Perpetuity contract UTXO
     // input_1 -> service funding UTXO
     // output_0 -> user payout UTXO
     // output_1 -> service payout UTXO
-    // output_2 (?) -> return remaining perpetual contract UTXO
+    // output_2 (?) -> return remaining Perpetuity contract UTXO
     function release() {
         require(tx.inputs.length == 2);
         require(tx.outputs.length == 3);

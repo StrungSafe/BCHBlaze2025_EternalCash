@@ -1,0 +1,28 @@
+pragma cashscript ~0.13.0;
+
+contract Perpetuity(bytes20 pubKeyHash) 
+{
+    // input_i -> Perpetuity contract UTXO
+    // output_0 -> user payout UTXO
+    // output_1 (?) -> return remaining Perpetuity contract UTXO unless EOL
+    function release() {
+        bytes25 userBytecode = new LockingBytecodeP2PKH(pubKeyHash);
+        require(tx.outputs[this.activeInputIndex].lockingBytecode == userBytecode);
+        
+        int initValue = tx.inputs[this.activeInputIndex].tokenAmount;
+        int payout = max(1, (initValue / 100) * 2);
+        int serviceFee = max(1, (initValue / 1000));
+        int remainder = initValue - payout - serviceFee;
+
+        console.log('starting amount', initValue, 'paying to user', payout, 'taking as a service fee', serviceFee, 'remainder amount', remainder);
+
+        require(tx.outputs[this.activeInputIndex].tokenAmount == payout);
+        require(tx.outputs[this.activeInputIndex].tokenCategory == tx.inputs[this.activeInputIndex].tokenCategory);
+
+        if(initValue > 2) {
+            require(tx.outputs[this.activeInputIndex + 1].lockingBytecode == tx.inputs[this.activeInputIndex].lockingBytecode);
+            require(tx.outputs[this.activeInputIndex + 1].tokenAmount == remainder);
+            require(tx.outputs[this.activeInputIndex + 1].tokenCategory == tx.inputs[this.activeInputIndex].tokenCategory);
+        }
+    }
+}
