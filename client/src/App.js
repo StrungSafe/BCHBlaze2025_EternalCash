@@ -19,6 +19,7 @@ import {
 } from '@bitauth/libauth';
 
 import perpetuity from './perpetuity_tokens.json' with { type: 'json' };
+import executorWallet from './executorWallet.json' with { type: 'json' };
 
 import './App.css';
 
@@ -37,6 +38,22 @@ const generateWallet = (network) => {
   const encoded = encodeCashAddress({ prefix: network === 'mainnet' ? 'bitcoincash' : 'bchtest', type: 'p2pkhWithTokens', payload: pubKeyHash });
   return { privateKey, pubKeyHex, pubKeyHash, signatureTemplate, address: typeof encoded === 'string' ? encoded : encoded.address };
 };
+
+async function getWallet(network) {
+  const secp256k1 = await instantiateSecp256k1();
+  const ripemd160 = await instantiateRipemd160();
+  const sha256 = await instantiateSha256();
+
+  const privateKey = wallet.PrivateKey;
+  const signatureTemplate = new SignatureTemplate(privateKey);
+
+  const decodedWif = decodePrivateKeyWif(wallet.PrivateKey);
+  const pubKeyBin = secp256k1.derivePublicKeyCompressed(decodedWif.privateKey);
+  const pubKeyHex = binToHex(pubKeyBin);
+  const pubKeyHash = ripemd160.hash(sha256.hash(pubKeyBin));
+  const encoded = encodeCashAddress({ prefix: network === 'mainnet' ? 'bitcoincash' : 'bchtest', type: 'p2pkhWithTokens', payload: pubKeyHash });
+  return { privateKey, signatureTemplate, pubKeyBin, pubKeyHex, pubKeyHash, address: typeof encoded === 'string' ? encoded : encoded.address };
+}
 
 function App() {
   const [user, setUser] = useState(null);
@@ -129,14 +146,11 @@ function App() {
   const onExecute = useCallback(async _ => {
     setSubmitting(true);
 
-    // TODO: Load wallet, get service UTXO
-    const executor = generateWallet(network);
-    const feesUtxo = randomUtxo();
-    provider.addUtxo(executor.address, feesUtxo);
-    // everything else should work
-
     const perpetuityUtxo = contractUtxos[0];
-    const service = executor;
+    const executor = getWallet(network);
+    const feesUtxo = (await provider.getUtxos(executor.address)).filter(u => !u.token);
+    debugger;
+
 
     const initial = perpetuityUtxo.token.amount;
     const payout = bigIntMax(1n, (initial / 100n) * 2n);
@@ -145,27 +159,27 @@ function App() {
     if (remainder > 0) {
       await new TransactionBuilder({ provider })
         .addInput(perpetuityUtxo, contract.unlock.release())
-        .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
+        .addInput(feesUtxo, executor.signatureTemplate.unlockP2PKH())
         .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetuityUtxo.token.category } })
         .addOutput({ to: contract.tokenAddress, amount: 1000n, token: { amount: remainder, category: perpetuityUtxo.token.category } })
-        .addOutput({ to: service.address, amount: 1000n, token: { amount: fee, category: perpetuityUtxo.token.category } })
+        .addOutput({ to: executor.address, amount: 1000n, token: { amount: fee, category: perpetuityUtxo.token.category } })
         .send();
     } else {
       if (initial - payout > 0) {
         // potentially a partial fee payout
         await new TransactionBuilder({ provider })
           .addInput(perpetuityUtxo, contract.unlock.release())
-          .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
+          .addInput(feesUtxo, executor.signatureTemplate.unlockP2PKH())
           .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetuityUtxo.token.category } })
-          .addOutput({ to: service.address, amount: 1000n, token: { amount: initial - payout, category: perpetuityUtxo.token.category } })
+          .addOutput({ to: executor.address, amount: 1000n, token: { amount: initial - payout, category: perpetuityUtxo.token.category } })
           .send();
       } else {
         // lose out on cost to execute? or rework this to do a balloon payment?
         await new TransactionBuilder({ provider })
           .addInput(perpetuityUtxo, contract.unlock.release())
-          .addInput(feesUtxo, service.signatureTemplate.unlockP2PKH())
+          .addInput(feesUtxo, executor.signatureTemplate.unlockP2PKH())
           .addOutput({ to: user.address, amount: 1000n, token: { amount: payout, category: perpetuityUtxo.token.category } })
-          .addOutput({ to: service.address, amount: 1000n })
+          .addOutput({ to: executor.address, amount: 1000n })
           .send();
       }
     }
