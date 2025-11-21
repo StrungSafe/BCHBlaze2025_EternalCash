@@ -40,11 +40,7 @@ const generateWallet = (network) => {
   return { privateKey, pubKeyHex, pubKeyHash, signatureTemplate, address: typeof encoded === 'string' ? encoded : encoded.address };
 };
 
-async function getWallet({ network, wallet }) {
-  const secp256k1 = await instantiateSecp256k1();
-  const ripemd160 = await instantiateRipemd160();
-  const sha256 = await instantiateSha256();
-
+function getWallet({ network, wallet }) {
   const privateKey = wallet.PrivateKey;
   const signatureTemplate = new SignatureTemplate(privateKey);
 
@@ -149,9 +145,15 @@ function App() {
 
     const perpetuityUtxo = contractUtxos[0];
     const executor = getWallet({ network, wallet: executorWallet });
-    const feesUtxo = (await provider.getUtxos(executor.address)).filter(u => !u.token);
+    const executorUtxos = (await provider.getUtxos(executor.address)).filter(u => !u.token && u.satoshis > 5000);
     debugger;
-
+    
+    if(executorUtxos.length === 0) {
+      console.error('no usable UTXOs available');
+      return;
+    }
+    
+    const feesUtxo = executorUtxos[0];
 
     const initial = perpetuityUtxo.token.amount;
     const payout = bigIntMax(1n, (initial / 100n) * 2n);
